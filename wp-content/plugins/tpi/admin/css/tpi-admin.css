@@ -1,0 +1,73 @@
+/**
+ * All of the CSS for your admin-specific functionality should be
+ * included in this file.
+ */
+
+
+div.meta.discount_range {
+
+    margin-top: 20px;
+
+
+    font-size: 26px;
+    font-size: 2.6rem;
+    line-height: 1.1538;
+    margin-bottom: 0.9231em;
+}
+
+.tpi_discount_title, .tpi_discount {
+
+    display: inline-block;
+
+}
+
+.tpi_discount {
+
+}
+
+.tpi_discount_title {
+    margin-right: 5px;
+}
+
+.tpi_discount_suffix {
+    margin-left: 1px;
+    margin-right: 20px;
+}
+
+
+td.tpi_shop_page {
+    border-left-color: black;
+    border-left-style: solid;
+    border-top-color: black;
+    border-top-style: solid;
+    border-bottom-color: black;
+    border-bottom-style: solid;
+    border-width: thin;
+}
+
+td.tpi_product_page {
+    border-top-color: black;
+    border-top-style: solid;
+    border-bottom-color: black;
+    border-bottom-style: solid;
+    border-width: thin;
+}
+
+td.tpi_cart {
+    border-top-color: black;
+    border-top-style: solid;
+    border-bottom-color: black;
+    border-bottom-style: solid;
+    border-width: thin;
+}
+
+td.tpi_checkout {
+    border-right-color: black;
+    border-right-style: solid;
+    border-top-color: black;
+    border-top-style: solid;
+    border-bottom-color: black;
+    border-bottom-style: solid;
+    border-width: thin;
+
+}

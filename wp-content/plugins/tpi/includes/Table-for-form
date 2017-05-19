@@ -1,0 +1,733 @@
+<!--  <table class="form-table">
+								<tr valign="top"><th scope="row"><?php _e( 'Hide the post meta information on posts?', 'wporg' ); ?></th>
+<td>
+	<select name="wporg_hide_meta[hide_meta]" id="hide-meta">
+		<?php $selected = $options['hide_meta']; ?>
+		<option value="1" <?php selected( $selected, 1 ); ?> >Yes, hide the post meta!</option>
+		<option value="0" <?php selected( $selected, 0 ); ?> >No, show my post meta!</option>
+	</select><br />
+	<label class="description" for="wporg_hide_meta[hide_meta]"><?php _e( 'Toggles whether or not to display post meta under posts.', 'wporg' ); ?></label>
+</td>
+</tr>
+</table>  -->
+
+
+
+
+							<?php $options = get_option( 'TPI-Discount-Lowest-ID' ); ?>
+							<?php $options = get_option( 'TPI-Discount-Highest-ID' ); ?>
+							<?php $options = get_option( 'Use-WooCommerce-ID' ); ?>
+							<?php $options = get_option( 'Apply-Before-Tax-ID' ); ?>
+							<!-- do settings sections($page) -->
+							<?php /*do_settings_sections('dice_coupon_options_page'); */?>
+
+
+
+							<td><input type="text" name="use_woocommerce" value="<?php echo esc_attr( get_option('use_woocommerce') ); ?>" /></td>
+
+
+							<?php $min_discount; ?>
+
+
+							function dice_coupon_options_page_neg_1() {
+
+
+                            		if ( ! isset( $_REQUEST['settings-updated'] ) )
+                            			$_REQUEST['settings-updated'] = false;
+
+                            		settings_errors();
+                            		?>
+                            		<div class="wrap">
+                            			<!--<h2>Dice Coupon Options</h2>-->
+
+                            		<?php if ( false !== $_REQUEST['settings-updated'] ) : ?>
+                            			<div class="updated fade"><p><strong><?php _e( 'Dice Coupon Options saved!', 'dice-coupon' ); ?></strong></p></div>
+                            		<?php endif; ?>
+
+                            		<h2><?php echo esc_html( get_admin_page_title() ); ?></h2>
+
+                            			<div id="poststuff">
+                            				<div id="post-body">
+                            					<div id="post-body-content">
+                            						<form method="post" action="options.php">
+                            							<!-- settings_fields( $option_group ) -->
+                            							<?php settings_fields( 'Dice-Coupon-Section' ); ?>
+                            							<?php do_settings_sections('dice-coupon'); ?>
+                            							<?php /*do_settings_sections('Dice-Coupon-Section'); */ ?>
+                            							<?php /* do_settings_fields( 'dice-coupon', 'Dice-Coupon-Section' ) */ ?>
+
+                            							<?php submit_button('Save Changes'); ?>
+
+                            						</form>
+                            					</div> <!-- end post-body-content -->
+                            				</div> <!-- end post-body -->
+                            			</div> <!-- end poststuff -->
+                            		</div>
+
+                            			<!--The Setting -->
+
+                            			<!-- THE Section -->
+
+                            			<!-- The Fields -->
+
+
+
+                            		</div>
+                            		<?php
+
+
+                            	}
+
+
+
+	function dice_coupon_settings_init(){
+
+		//add_settings_section($id, $title, $callback, $page)
+		add_settings_section(
+			'Dice-Coupon-Section',
+			'Dice Coupon Settings',
+			array($this, 'dice_coupon_settings_setup'),
+			//'dice_coupon_options_page'
+			'dice-coupon'
+		);
+
+		// register_setting( $settings_section, $option_name, $sanitize_callback )
+		// $option_name is referenced in get_option() and update_option()
+		register_setting('Dice-Coupon-Section', 'TPI-Discount-Lowest-ID', array($this, 'TPI_Discount_Validation'));
+
+		//add option fields in this section
+		//add_settings_field( $id, $title, $callback, $page, $section = 'default', $args = array() )
+		//add_settings_field('TPI-Discount-Lowest-ID', 'Lowest Discount Percentage', array($this,'TPI_Textbox'), 'dice_coupon_options_page', 'Dice-Coupon-Section',
+		//	array('name' => 'Discount Lowest') );
+		add_settings_field('TPI-Discount-Lowest-ID', 'Lowest Discount Percentage', array($this,'TPI_Textbox'), 'dice-coupon', 'Dice-Coupon-Section',
+			array('name' => 'Discount Lowest') );
+
+		//register_setting('tpi-discount-settings', 'TPI-Discount-Highest-ID', array($this, 'TPI_Discount_Validation'));
+		register_setting('Dice-Coupon-Section', 'TPI-Discount-Highest-ID', array($this, 'TPI_Discount_Validation'));
+
+		add_settings_field('TPI-Discount-Highest-ID', 'Highest Discount Percentage', array($this,'TPI_Textbox'), 'dice-coupon', 'Dice-Coupon-Section',
+			array('name' => 'Discount Highest') );
+
+
+
+		if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
+
+			register_setting('Dice-Coupon-Section', 'Use-WooCommerce-ID', array($this, 'TPI_Discount_Validation'));
+			add_settings_field('Use-WooCommerce-ID', 'Use Woocommerce', array($this,'TPI_Checkbox'), 'dice-coupon', 'Dice-Coupon-Section',//add as a checkbox
+				array('name' => 'Use WooCommerce') );//set default value?
+
+			register_setting('Dice-Coupon-Section', 'Apply-Before-Tax-ID', array($this, 'TPI_Discount_Validation'));
+			add_settings_field('Apply-Before-Tax-ID', 'Apply before tax', array($this,'TPI_Textbox'), 'dice-coupon', 'Dice-Coupon-Section',
+				array('name' => 'Apply before tax') );
+
+		}
+
+
+		// unregister_setting( $option_group, $option_name, $sanitize_callback )
+
+
+	}
+
+
+
+	function dice_coupon_settings_setup(){
+    		echo '<p>Set the minimum and maximum discount rates here.</p>';
+    	}
+
+
+
+        public function tpi_admin_menu() {
+            $dice_image = '/wp-content/plugins/tpi/public/images/tpi-die-with-four-corners-20x20.png';
+            add_menu_page( 'TPI Cast Die', 'Die Casting', 'manage_options', 'tpi-cast-die', array($this, 'render_tpi_cast_die_page'), $dice_image, 6  );
+        }
+
+        public function render_tpi_cast_die_page() {
+            //echo 'This is the Cast Die page.';
+
+            /*$testpath =  plugin_dir_path( dirname( __FILE__ ) ) . 'admin/partials/tpi-admin-display.php';
+            require_once $testpath;
+            */
+
+            $this->Discount_Option_Page_Setup();
+        }
+
+
+
+
+    /*
+    *  Setup section, settings
+    */
+    function TPI_Discount_Settings_Init(){  //stopped here tjs 2016Sept10
+
+        //add_settings_section($id, $title, $callback, $page)
+        add_settings_section('TPI-Discount-Section', 'Different discount percentages for the die', array($this, 'TPI_discount_settings_setup'), 'discount-option-page' );
+
+        //add option fields in this section
+        //add_settings_field($id, $title, $callback, $page, $section, $args)
+        add_settings_field('TPI-Discount-Lowest-ID', 'Lowest Discount Percentage', array($this,'TPI_Textbox'), 'discount-option-page', 'TPI-Discount-Section',
+            array('id'=>'TPI-Discount-Lowest-ID','name' => 'Lowest Discount Percentage') );
+		register_setting('tpi-discount-settings', 'TPI-Discount-Lowest-ID', array($this, 'TPI_Discount_Validation'));
+
+        add_settings_field('TPI-Discount-Highest-ID', 'Highest Discount Percentage', array($this,'TPI_Textbox'), 'discount-option-page', 'TPI-Discount-Section',
+            array('id'=>'TPI-Discount-Highest-ID','name' => 'Highest Discount Percentage') );
+		register_setting('tpi-discount-settings', 'TPI-Discount-Highest-ID', array($this, 'TPI_Discount_Validation'));
+
+        if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
+            // Put your plugin code here
+
+            add_settings_field('Use-WooCommerce-ID', 'Use Woocommerce', array($this,'TPI_Checkbox'), 'discount-option-page', 'TPI-Discount-Section',//add as a checkbox
+                array('id'=>'Use-WooCommerce-ID','name' => 'Use Woocommerce') );//set default value?
+			register_setting('tpi-discount-settings', 'Use-WooCommerce-ID', array($this, 'TPI_Discount_Validation'));
+
+
+
+            add_settings_field('Apply-Before-Tax-ID', 'Apply before tax', array($this,'TPI_Textbox'), 'discount-option-page', 'TPI-Discount-Section',
+                array('id'=>'Apply-Before-Tax-ID','name' => 'Apply before tax') );
+			register_setting('tpi-discount-settings', 'Apply-Before-Tax-ID', array($this, 'TPI_Discount_Validation'));
+        }
+
+
+        //Tell Wordpress about our option name in database
+        // register_setting( $option_group, $option_name, $sanitize_callback)
+        //register_setting('tpi-discount-settings', 'TPI_Discount_Options', array($this, 'TPI_Discount_Validation'));
+    }
+
+
+    function Discount_Option_Page_Setup(){
+        ?>
+        <div class="wrap">
+            <h2>Discount Option Page</h2>
+            <form method="post" action="options.php">
+                <!-- settings_fields( $option_group ) -->
+                <?php settings_fields('tpi-discount-settings'); ?>
+                <!-- do settings sections($page) -->
+                <?php do_settings_sections('discount-option-page'); ?>
+                <?php submit_button('Save Percentages'); ?>
+            </form>
+        </div>
+
+        <?php
+    }
+
+
+    function TPI_Discount_Settings_Setup(){
+        echo '<p>Set the minimum and maximum discount rates here.</p>';
+    }
+
+    function TPI_Textbox($args){
+
+		$current_value = esc_attr(get_option('Minimum_Discount-ID'));
+
+		//$setting = esc_attr( get_option( $args[0]['id'] ) );
+		echo "<input type='text' name=$args[0]['name'] value='$current_value' />";
+    }
+
+    function TPI_Checkbox($args){
+
+    	$use_woocommerce = esc_attr(get_option('Use-WooCommerce-ID'));
+		//$setting = esc_attr( get_option( $args[0]['id'] ) );
+		//$name = esc_attr( get_option( $args[0]['name'] ) );
+		//echo "<input type='text' name=$args[0]['name'] value='$setting' />";
+
+    	//extract($args);
+
+		$html = '<input name=$name type="checkbox" id="use_woocommerce" value="1"' . checked(1, $use_woocommerce , false) .  '/>';
+		$html .= '<label for="use_woocommerce"> '  . 'Use Woocommerce' . '</label>';
+		echo $html ;
+	}
+
+
+	function wporg_setting_callback_function() {
+		$setting = esc_attr( get_option( 'wporg_setting_name' ) );
+		echo "<input type='text' name='wporg_setting_name' value='$setting' />";
+	}
+
+	function TPI_Discount_Validation($input){
+
+		//check if use_woocommerce is set, then set $ecommerce_kit to 'woocommerce'
+
+		return $input;
+	}
+
+
+
+	hover(function(){
+    				jQuery(this.css('opacity', '1'))
+    			})
+
+
+
+    <tr class="cart-discount coupon-sixpercent">
+    	<th>Coupon: sixpercent</th>
+    	<td data-title="Coupon: sixpercent">-<span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>1.20</span> <a href="http://transcentplugin.dev:8888/cart/?remove_coupon=sixpercent" class="woocommerce-remove-coupon" data-coupon="sixpercent">[Remove]</a></td>
+    </tr>
+
+
+
+
+			<tr class="cart-discount coupon-<?php echo esc_attr( sanitize_title( $code ) ); ?>">
+				<th><?php wc_cart_totals_coupon_label( $coupon ); ?></th>
+				<td data-title="<?php echo esc_attr( wc_cart_totals_coupon_label( $coupon, false ) ); ?>"><?php wc_cart_totals_coupon_html( $coupon ); ?></td>
+			</tr>
+
+
+
+				jQuery('#wrapper label[for="secondroll"]').off('mouseover').off('mouseout');
+            	jQuery('#secondroll').attr('disabled','disabled');
+            	//jQuery('#secondroll').prop('disabled', true); //deactivate button?
+            	jQuery('#secondroll').after('<div class="after-discount"><p>This is after the discount</p></div>');
+
+
+
+
+<div class="cart-collaterals">
+
+	<div class="cart_totals ">
+
+
+	<h2>Cart Totals</h2>
+
+	<table cellspacing="0" class="shop_table shop_table_responsive">
+
+		<tbody><tr class="cart-subtotal">
+			<th>Subtotal</th>
+			<td data-title="Subtotal"><span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>39.98</span></td>
+		</tr><div class="cart_totals calculated_shipping"><h2>Cart Totals</h2><table cellspacing="0" class="shop_table shop_table_responsive"><tbody><tr class="cart-subtotal"><th>Subtotal</th><td data-title="Subtotal"><span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>19.99</span></td> </tr><tr class="cart-discount coupon-eightpercent"><th>Coupon: eightpercent</th><td data-title="Coupon: eightpercent">-<span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>1.60</span> <a href="http://transcentplugin.dev:8888/cart/?remove_coupon=eightpercent" class="woocommerce-remove-coupon" data-coupon="eightpercent">[Remove]</a></td></tr><tr class="tax-total"><th>Tax</th><td data-title="Tax"><span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>0.00</span></td></tr><tr class="order-total"><th>Total</th><td data-title="Total"><strong><span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>18.39</span></strong> </td></tr></tbody></table><div class="wc-proceed-to-checkout"><a href="http://transcentplugin.dev:8888/checkout/" class="checkout-button button alt wc-forward">Proceed to Checkout</a></div></div>Coupon: sixpercentCoupon: sixpercent-<span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>1.20</span> <a href="http://transcentplugin.dev:8888/cart/?remove_coupon=sixpercent" class="woocommerce-remove-coupon" data-coupon="sixpercent">[Remove]</a>
+
+					<tr class="cart-discount coupon-twelvepercent">
+				<th>Coupon: twelvepercent</th>
+				<td data-title="Coupon: twelvepercent">-<span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>4.80</span> <a href="http://transcentplugin.dev:8888/cart/?remove_coupon=twelvepercent" class="woocommerce-remove-coupon" data-coupon="twelvepercent">[Remove]</a></td>
+			</tr>
+
+
+
+						<tr class="tax-total">
+					<th>Tax</th>
+					<td data-title="Tax"><span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>0.00</span></td>
+				</tr>
+
+
+		<tr class="order-total">
+			<th>Total</th>
+			<td data-title="Total"><strong><span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>35.18</span></strong> </td>
+		</tr>
+
+
+	</tbody></table>
+
+	<div class="wc-proceed-to-checkout">
+
+<a href="http://transcentplugin.dev:8888/checkout/" class="checkout-button button alt wc-forward">
+	Proceed to Checkout</a>
+	</div>
+
+
+</div>
+
+</div>
+
+
+
+<li class="product">
+	<a href="http://transcentplugin.dev:8888/product/brazil-soccer/" class="woocommerce-LoopProduct-link"><img width="300" height="300" src="http://transcentplugin.dev:8888/wp-content/uploads/2016/10/brazil-soccer-300x300.jpeg" class="attachment-shop_catalog size-shop_catalog wp-post-image" alt="brazil-soccer" title="brazil-soccer" srcset="http://transcentplugin.dev:8888/wp-content/uploads/2016/10/brazil-soccer-300x300.jpeg 300w, http://transcentplugin.dev:8888/wp-content/uploads/2016/10/brazil-soccer-150x150.jpeg 150w, http://transcentplugin.dev:8888/wp-content/uploads/2016/10/brazil-soccer-180x180.jpeg 180w, http://transcentplugin.dev:8888/wp-content/uploads/2016/10/brazil-soccer-600x600.jpeg 600w" sizes="(max-width: 300px) 85vw, 300px"><h3>Brazil Soccer</h3>
+
+	<span class="price"><span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>24.00</span>–<span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>24.99</span></span>
+</a><a rel="nofollow" href="http://transcentplugin.dev:8888/product/brazil-soccer/" data-quantity="1" data-product_id="201" data-product_sku="" class="button product_type_variable add_to_cart_button">Select options</a></li>
+
+
+<li class="product type-product status-publish has-post-thumbnail product_cat-team-brazil last instock taxable shipping-taxable purchasable product-type-variable has-default-attributes has-children">
+	<a href="http://transcentplugin.dev:8888/product/brazil-soccer/" class="woocommerce-LoopProduct-link"><img width="300" height="300" src="http://transcentplugin.dev:8888/wp-content/uploads/2016/10/brazil-soccer-300x300.jpeg" class="attachment-shop_catalog size-shop_catalog wp-post-image" alt="brazil-soccer" title="brazil-soccer" srcset="http://transcentplugin.dev:8888/wp-content/uploads/2016/10/brazil-soccer-300x300.jpeg 300w, http://transcentplugin.dev:8888/wp-content/uploads/2016/10/brazil-soccer-150x150.jpeg 150w, http://transcentplugin.dev:8888/wp-content/uploads/2016/10/brazil-soccer-180x180.jpeg 180w, http://transcentplugin.dev:8888/wp-content/uploads/2016/10/brazil-soccer-600x600.jpeg 600w" sizes="(max-width: 300px) 85vw, 300px"><h3>Brazil Soccer</h3>
+
+	<span class="price"><span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>24.00</span>–<span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>24.99</span></span>
+</a><a rel="nofollow" href="http://transcentplugin.dev:8888/product/brazil-soccer/" data-quantity="1" data-product_id="201" data-product_sku="" class="button product_type_variable add_to_cart_button">Select
+
+
+
+<h1 class="page-title">Shop</h1>
+
+
+body.post-type-archive-product.woocommerce
+body.single-product.woocommerce
+body.woocommerce-cart.woocommerce
+body.woocommerce-checkout.woocommerce
+
+
+page page-id-21 page-template-default logged-in admin-bar woocommerce-cart woocommerce-page customize-support
+archive post-type-archive post-type-archive-product logged-in admin-bar woocommerce woocommerce-page hfeed customize-support
+
+
+#main >
+    ul >
+        li.post-201.product.type-product.status-publish.has-post-thumbnail.product_cat-team-brazil.last.instock.taxable.shipping-taxable.purchasable.product-type-variable.has-default-attributes.has-children >
+            a.woocommerce-LoopProduct-link >
+                span.woocommerce-Price-amount
+
+
+                <span class="woocommerce-Price-currencySymbol">$</span>24.99</span>
+
+
+<span class="price">
+    <span class="woocommerce-Price-amount amount">
+        <span class="woocommerce-Price-currencySymbol">$</span>
+        24.00
+    </span>
+        –
+    <span class="woocommerce-Price-amount amount">
+        <span class="woocommerce-Price-currencySymbol">$</span>
+        24.99
+    </span>
+</span>
+
+
+
+span.woocommerce-Price-currencySymbol
+
+tpi-widgets.js
+
+
+                setTimeout(function(){
+
+                    jQuery('#discount-span').html(response.percentage);
+                    console.log('success');
+
+                    /*
+                     response:Object
+                     coupon_code:
+                     percentage.text:"12%"
+                     percentage.decimal: .12
+                     subtotal:39.98
+                     subtotal_ex_tax:39.98
+                     tax_total
+                     total:0
+                     */
+
+                    var current_page = jQuery('body');
+
+                    if(current_page){
+                        if(jQuery('body').hasClass("post-type-archive-product"))
+                        {
+
+                            console.log('Shop New Check');
+
+                            /*  loop through li  */
+
+                            //var products = jQuery('ul.products');
+
+                            //var not_product = jQuery(products).not('product-category');
+
+                            /*
+                            jQuery('ul.products li.type-product').each(function( index ) {
+                                console.log( index + ": " + jQuery(this).text() );
+                                console.log( index + ": " + jQuery(this).html() );
+                            });
+                            */
+
+                            var list_item = jQuery('ul.products li.type-product');
+                            list_item_parent = list_item.parent();
+                            list_item.detach();
+
+
+                            console.log("List Item count:  " + list_item.length);
+                            jQuery(list_item).each(function(index){
+
+                                var current_list_item = jQuery(this);
+
+                                console.log( "<list Item " + index + ">" + ": " + jQuery(current_list_item).html() + "\n<\/list_item>" );
+
+
+                                var price_children = jQuery(current_list_item).find('span.price').children();
+                                jQuery(price_children).each(function(index){
+                                    if(jQuery(price_children).hasClass('woocommerce-Price-amount')){
+                                        var amount = parseInt(jQuery(this));
+                                        var discount = amount * 1 * response.percentage.decimal;
+                                        var new_amount = amount - discount;
+                                        jQuery(price_children).css('text-decoration', 'line-through').append(new_amount);
+                                    }
+                                });
+                            });
+
+                            list_item_parent.append(list_item);
+
+
+                            /*
+                             var spans = $( "span" );
+                             $( "p" ).find( spans ).css( "color", "red" );
+                             */
+
+
+
+                            //var wc_price = jQuery(list_item + '> price woocommerce-Price-amount');
+
+
+
+                            //<span class="price"><span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>14.99</span></span>
+
+                            //loop through woocomerce-Price-amount and/or through woocommerce-Price-currencySymbol
+
+                            //<span class="price">
+                            //  <span class="woocommerce-Price-amount amount">
+                            //      <span class="woocommerce-Price-currencySymbol">$</span>
+                            //      24.00
+                            //  </span>
+                            // –
+                            //  <span class="woocommerce-Price-amount amount">
+                            //      <span class="woocommerce-Price-currencySymbol">$</span>
+                            //      24.99
+                            //  </span>
+                            // </span>
+
+
+                            /*jQuery('ul.products li.type-product').each(function( index ) {
+                                var list_item = jQuery( this);
+                                var list_item_not_product = jQuery(list_item).not("product-category")
+                                if(list_item_not_product){
+                                    console.log( index + ": " + list_item_not_product.text() );
+
+                                if(list_item){
+                                    console.log( index + ": " + list_item.text() );
+                                }
+                            }); */
+
+
+                            /*
+                        <ul class="products">
+
+                            <li class="product-category product first">
+                            <a href="http://transcentplugin.dev:8888/product-category/team-brazil/"><img src="http://transcentplugin.dev:8888/wp-content/plugins/woocommerce/assets/images/placeholder.png" alt="Team Brazil" width="300" height="300">		<h3>
+                            Team Brazil <mark class="count">(1)</mark>		</h3>
+                            </a></li>
+                            <li class="product-category product">
+                            <a href="http://transcentplugin.dev:8888/product-category/team-italy/"><img src="http://transcentplugin.dev:8888/wp-content/plugins/woocommerce/assets/images/placeholder.png" alt="Team Italy" width="300" height="300">		<h3>
+                            Team Italy <mark class="count">(1)</mark>		</h3>
+                            </a></li>
+                            <li class="product-category product">
+                            <a href="http://transcentplugin.dev:8888/product-category/team-usa/"><img src="http://transcentplugin.dev:8888/wp-content/plugins/woocommerce/assets/images/placeholder.png" alt="Team USA" width="300" height="300">		<h3>
+                            Team USA <mark class="count">(1)</mark>		</h3>
+                            </a></li>
+
+
+                            <li class="post-201 product type-product status-publish has-post-thumbnail product_cat-team-brazil last instock taxable shipping-taxable purchasable product-type-variable has-default-attributes has-children">
+                            <a href="http://transcentplugin.dev:8888/product/brazil-soccer/" class="woocommerce-LoopProduct-link"><img width="300" height="300" src="http://transcentplugin.dev:8888/wp-content/uploads/2016/10/brazil-soccer-300x300.jpeg" class="attachment-shop_catalog size-shop_catalog wp-post-image" alt="brazil-soccer" title="brazil-soccer" srcset="http://transcentplugin.dev:8888/wp-content/uploads/2016/10/brazil-soccer-300x300.jpeg 300w, http://transcentplugin.dev:8888/wp-content/uploads/2016/10/brazil-soccer-150x150.jpeg 150w, http://transcentplugin.dev:8888/wp-content/uploads/2016/10/brazil-soccer-180x180.jpeg 180w, http://transcentplugin.dev:8888/wp-content/uploads/2016/10/brazil-soccer-600x600.jpeg 600w" sizes="(max-width: 300px) 85vw, 300px"><h3>Brazil Soccer</h3>
+
+                        <span class="price"><span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>24.00</span>–<span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>24.99</span></span>
+                            </a><a rel="nofollow" href="http://transcentplugin.dev:8888/product/brazil-soccer/" data-quantity="1" data-product_id="201" data-product_sku="" class="button product_type_variable add_to_cart_button">Select options</a></li>
+
+
+                        <li class="post-210 product type-product status-publish has-post-thumbnail product_cat-team-italy first instock taxable shipping-taxable purchasable product-type-variable has-default-attributes has-children">
+                            <a href="http://transcentplugin.dev:8888/product/italy-soccer/" class="woocommerce-LoopProduct-link"><img width="300" height="300" src="http://transcentplugin.dev:8888/wp-content/uploads/2016/10/italy-soccer-300x300.jpeg" class="attachment-shop_catalog size-shop_catalog wp-post-image" alt="italy-soccer" title="italy-soccer" srcset="http://transcentplugin.dev:8888/wp-content/uploads/2016/10/italy-soccer-300x300.jpeg 300w, http://transcentplugin.dev:8888/wp-content/uploads/2016/10/italy-soccer-150x150.jpeg 150w, http://transcentplugin.dev:8888/wp-content/uploads/2016/10/italy-soccer-180x180.jpeg 180w, http://transcentplugin.dev:8888/wp-content/uploads/2016/10/italy-soccer-600x600.jpeg 600w" sizes="(max-width: 300px) 85vw, 300px"><h3>Italy Soccer</h3>
+
+                        <span class="price"><span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>14.99</span></span>
+                            </a><a rel="nofollow" href="http://transcentplugin.dev:8888/product/italy-soccer/" data-quantity="1" data-product_id="210" data-product_sku="" class="button product_type_variable add_to_cart_button">Select options</a></li>
+
+
+                        <li class="post-40 product type-product status-publish has-post-thumbnail product_cat-team-usa  instock featured taxable shipping-taxable purchasable product-type-variable has-default-attributes has-children">
+                            <a href="http://transcentplugin.dev:8888/product/usa-soccer/" class="woocommerce-LoopProduct-link"><img width="300" height="300" src="http://transcentplugin.dev:8888/wp-content/uploads/2016/09/t-shirt-1-300x300.jpeg" class="attachment-shop_catalog size-shop_catalog wp-post-image" alt="USA Soccer" title="usa soccer 1" srcset="http://transcentplugin.dev:8888/wp-content/uploads/2016/09/t-shirt-1-300x300.jpeg 300w, http://transcentplugin.dev:8888/wp-content/uploads/2016/09/t-shirt-1-150x150.jpeg 150w, http://transcentplugin.dev:8888/wp-content/uploads/2016/09/t-shirt-1-180x180.jpeg 180w, http://transcentplugin.dev:8888/wp-content/uploads/2016/09/t-shirt-1-600x600.jpeg 600w" sizes="(max-width: 300px) 85vw, 300px"><h3>USA Soccer</h3>
+
+                        <span class="price"><span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>19.99</span></span>
+                            </a><a rel="nofollow" href="http://transcentplugin.dev:8888/product/usa-soccer/" data-quantity="1" data-product_id="40" data-product_sku="" class="button product_type_variable add_to_cart_button">Select options</a></li>
+
+
+                        </ul>
+                        */
+
+                            /* get span.woocommerce-Price-currencySymbol  */
+
+                            /* get price and restyle with cross out   */
+
+                            /* add reduced price before taxes*/
+                        }
+                        else if (jQuery('body').hasClass("single-product"))
+                        {
+
+                            console.log('Product New Check');
+                        }
+                        else if (jQuery('body').hasClass("woocommerce-cart"))
+                        {
+
+                            console.log('Cart New Check');
+
+
+                            var cart_totals = '<div class="cart_totals calculated_shipping">';
+                            cart_totals += '<h2>Cart Totals</h2>';
+                            cart_totals += '<table cellspacing="0" class="shop_table shop_table_responsive">';
+                            cart_totals += '<tbody><tr class="cart-subtotal">';
+                            cart_totals += '<th>Subtotal</th>';
+                            cart_totals += '<td data-title="Subtotal"><span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>' + response.subtotal + '</span></td> </tr>';
+                            cart_totals += '<tr class="cart-discount coupon-' + response.coupon_code + '">';
+                            cart_totals += '<th>Coupon:\n' + response.coupon_code + '</th>';
+                            cart_totals += '<td data-title="Coupon: ' + response.coupon_code + '">-<span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>' + response.discount + '</span> <a href="http://transcentplugin.dev:8888/cart/?remove_coupon=' + response.coupon_code + ' " class="woocommerce-remove-coupon" data-coupon="' + response.coupon_code + '">[Remove]</a></td>';
+                            cart_totals += '</tr>';
+                            cart_totals += '<tr class="tax-total">';
+                            cart_totals += '<th>Tax</th>';
+                            cart_totals += '<td data-title="Tax"><span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>' + response.tax_total + '</span></td>';
+                            cart_totals += '</tr>';
+                            cart_totals += '<tr class="order-total">';
+                            cart_totals += '<th>Total</th>';
+                            cart_totals += '<td data-title="Total"><strong><span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>' + response.order_total + '</span></strong> </td>';
+                            cart_totals += '</tr>';
+                            cart_totals += '</tbody></table>';
+                            cart_totals += '<div class="wc-proceed-to-checkout">';
+                            cart_totals += '<a href="http://transcentplugin.dev:8888/checkout/" class="checkout-button button alt wc-forward">';
+                            cart_totals += 'Proceed to Checkout</a>';
+                            cart_totals += '</div>';
+                            cart_totals += '</div>';
+
+                            jQuery('div.cart-collaterals').html(cart_totals);
+                        }
+                        else if (jQuery('body').hasClass("woocommerce-checkout"))
+                        {
+
+                            console.log('Checkout New Check');
+
+                            var coupon = '<tr class="cart-discount coupon-' + response.coupon_code + '">';
+                            coupon += '<th>Coupon:\n ' + response.coupon_code + '</th>';
+                            coupon += '<td>-<span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>' + response.discount + '</span> <a href="http://transcentplugin.dev:8888/checkout/?remove_coupon=' + response.coupon_code + '" class="woocommerce-remove-coupon" data-coupon="f' + response.coupon_code + '">[Remove]</a></td>';
+                            coupon += '</tr>';
+                            jQuery('tr.cart-subtotal').after(coupon);
+
+                            var tax  = '<th>Tax</th>';
+                            tax += '<td><span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>' + response.tax_total + '</span></td>';
+                            jQuery('tr.tax-total').html(tax);
+
+                            var total = '<th>Total</th>';
+                            total += '<td><strong><span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>' + response.order_total + '</span></strong> </td>';
+                            jQuery('tr.order-total').html(total);
+                        }
+                    }
+
+                    var current_title = jQuery('h1.entry-title').text();
+                    if (current_title == 'Cart') {
+
+                        /*
+                        console.log('Cart');
+
+                        var cart_totals = '<div class="cart_totals calculated_shipping">';
+                        cart_totals += '<h2>Cart Totals</h2>';
+                        cart_totals += '<table cellspacing="0" class="shop_table shop_table_responsive">';
+                        cart_totals += '<tbody><tr class="cart-subtotal">';
+                        cart_totals += '<th>Subtotal</th>';
+                        cart_totals += '<td data-title="Subtotal"><span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>' + response.subtotal + '</span></td> </tr>';
+                        cart_totals += '<tr class="cart-discount coupon-' + response.coupon_code + '">';
+                        cart_totals += '<th>Coupon:\n' + response.coupon_code + '</th>';
+                        cart_totals += '<td data-title="Coupon: ' + response.coupon_code + '">-<span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>' + response.discount + '</span> <a href="http://transcentplugin.dev:8888/cart/?remove_coupon=' + response.coupon_code + ' " class="woocommerce-remove-coupon" data-coupon="' + response.coupon_code + '">[Remove]</a></td>';
+                        cart_totals += '</tr>';
+                        cart_totals += '<tr class="tax-total">';
+                        cart_totals += '<th>Tax</th>';
+                        cart_totals += '<td data-title="Tax"><span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>' + response.tax_total + '</span></td>';
+                        cart_totals += '</tr>';
+                        cart_totals += '<tr class="order-total">';
+                        cart_totals += '<th>Total</th>';
+                        cart_totals += '<td data-title="Total"><strong><span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>' + response.order_total + '</span></strong> </td>';
+                        cart_totals += '</tr>';
+                        cart_totals += '</tbody></table>';
+                        cart_totals += '<div class="wc-proceed-to-checkout">';
+                        cart_totals += '<a href="http://transcentplugin.dev:8888/checkout/" class="checkout-button button alt wc-forward">';
+                        cart_totals += 'Proceed to Checkout</a>';
+                        cart_totals += '</div>';
+                        cart_totals += '</div>';
+
+                         jQuery('div.cart-collaterals').html(cart_totals);
+                         */
+
+                    }else if(current_title == 'Checkout'){
+
+                        /*
+                        console.log('Checkout');
+
+                        var coupon = '<tr class="cart-discount coupon-' + response.coupon_code + '">';
+                        coupon += '<th>Coupon:\n ' + response.coupon_code + '</th>';
+                        coupon += '<td>-<span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>' + response.discount + '</span> <a href="http://transcentplugin.dev:8888/checkout/?remove_coupon=' + response.coupon_code + '" class="woocommerce-remove-coupon" data-coupon="f' + response.coupon_code + '">[Remove]</a></td>';
+                        coupon += '</tr>';
+                         jQuery('tr.cart-subtotal').after(coupon);
+
+                        var tax  = '<th>Tax</th>';
+                        tax += '<td><span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>' + response.tax_total + '</span></td>';
+                        jQuery('tr.tax-total').html(tax);
+
+                        var total = '<th>Total</th>';
+                        total += '<td><strong><span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>' + response.order_total + '</span></strong> </td>';
+                        jQuery('tr.order-total').html(total);
+
+                        */
+
+                    }else {
+                        /*
+                        var page_title = jQuery('h1.page-title').text()
+
+                        if(page_title == 'Shop'){
+
+                             console.log('Shop');
+                        }
+                        */
+                    }
+
+                }, 5000); /*  5-second delay */
+
+
+
+
+                check count if 1 then do this if > 1 then do that.
+                if that, get first and last
+
+
+                <a href="http://transcentplugin.dev:8888/cart/?remove_coupon=twelvepercent" class="woocommerce-remove-coupon" data-coupon="twelvepercent">[Remove]</a>
+
+                <a href="http://clear_discount" class="tpi-clear-discount"> [Remove]  </a>
+
+
+                <a href="' . esc_url( add_query_arg( 'remove_coupon', urlencode( $coupon->code ), defined( 'WOOCOMMERCE_CHECKOUT' ) ? wc_get_checkout_url() : wc_get_cart_url() ) ) . '" class="woocommerce-remove-coupon" data-coupon="' . esc_attr( $coupon->code ) . '">' . __( '[Remove]', 'woocommerce' ) . '</a>';
+
+
+                0
+                :
+                "21.12"
+                1
+                :
+                "21.99"
+                2
+                :
+                "19.01"
+                3
+                :
+                "19.79"
+
+
+
+                $24.00–$24.99
+$14.99
+
+$19.99
+
+
+
+$24.00–$24.99
+$23.04–$23.99
+
+
+$14.99
+$14.39
+
+
+---------------------------------
+$24.00–$24.99
+$22.56–$23.49
+
+
+"22.32"
+1
+:
+"23.24"
+2
+:
+"20.98"
+3
+:
+"21.85"
+
+
+$14.99
+$14.09
+
+
+$19.99
+$18.79

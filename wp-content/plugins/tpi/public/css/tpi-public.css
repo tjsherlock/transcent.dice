@@ -1,0 +1,10 @@
+/**
+ * All of the CSS for your public-facing functionality should be
+ * included in this file.
+ */
+
+.shop_page {
+
+    border-left-color: black;
+    border-left-style: solid;
+}
