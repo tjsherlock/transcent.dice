@@ -96,6 +96,12 @@ class Tpi_Widget extends WP_Widget {
 			)
 		);
 
+
+        //add_action( 'init', array( __CLASS__, 'register_post_types' ), 5 );
+
+        //Register post types
+
+        add_action('dice_coupon_type', array($this,'register_coupon_type' ));
 		// Register admin styles and scripts
 		add_action( 'admin_print_styles', array( $this, 'register_admin_styles' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'register_admin_scripts' ) );
@@ -670,6 +676,15 @@ class Tpi_Widget extends WP_Widget {
         Update_option('coupon_code', false);
         update_option('coupon-percentage', false);
         update_option('dice_coupon_properties', false);
+
+
+        //If cart has coupon then remove coupon
+
+
+
+        //$woocommerce->cart->remove_coupon($coupon_added);
+        //$woocommerce->cart->has_discount( $coupon_code )
+        //$woocommerce->cart->add_discount($coupon_code);
 
         /*
         update_option('discount', false);
@@ -1607,6 +1622,58 @@ public function add_discounted_single_variation($content){
 
 
     }
+
+
+
+    //Coupon
+public static function register_coupon_type( ) {
+
+
+
+    if ( 'yes' == get_option( 'woocommerce_enable_coupons' ) ) {
+        register_post_type( 'dice_coupon',
+            apply_filters( 'woocommerce_register_post_type_dice_coupon',
+                array(
+                    'labels'              => array(
+                        'name'                  => __( 'Dice Coupons', 'transcent' ),
+                        'singular_name'         => __( 'Dice Coupon', 'transcent' ),
+                        'menu_name'             => _x( 'Dice Coupons', 'Admin menu name', 'transcent' ),
+                        'add_new'               => __( 'Add dice coupon', 'transcent' ),
+                        'add_new_item'          => __( 'Add new dice coupon', 'transcent' ),
+                        'edit'                  => __( 'Edit', 'transcent' ),
+                        'edit_item'             => __( 'Edit dice coupon', 'transcent' ),
+                        'new_item'              => __( 'New dice coupon', 'transcent' ),
+                        'view'                  => __( 'View dice coupons', 'transcent' ),
+                        'view_item'             => __( 'View dice coupon', 'transcent' ),
+                        'search_items'          => __( 'Search dice coupons', 'transcent' ),
+                        'not_found'             => __( 'No dice coupons found', 'transcent' ),
+                        'not_found_in_trash'    => __( 'No dice coupons found in trash', 'transcent' ),
+                        'parent'                => __( 'Parent coupon', 'transcent' ),
+                        'filter_items_list'     => __( 'Filter dice coupons', 'transcent' ),
+                        'items_list_navigation' => __( 'Coupons coupons navigation', 'transcent' ),
+                        'items_list'            => __( 'Coupons list', 'transcent' ),
+                    ),
+                    'description'         => __( 'This is where you can add new dice coupons that customers can use in your store.', 'transcent' ),
+                    'public'              => false,
+                    'show_ui'             => true,
+                    'capability_type'     => 'shop_coupon',
+                    'map_meta_cap'        => true,
+                    'publicly_queryable'  => false,
+                    'exclude_from_search' => true,
+                    //'show_in_menu'        => current_user_can( 'manage_woocommerce' ) ? 'woocommerce' : true,
+                    'show_in_menu'        => current_user_can( 'manage_woocommerce' ) ? 'woocommerce' : true,
+                    'hierarchical'        => false,
+                    'rewrite'             => false,
+                    'query_var'           => false,
+                    'supports'            => array( 'title' ),
+                    'show_in_nav_menus'   => false,
+                    'show_in_admin_bar'   => true,
+                )
+            )
+        );
+    }
+
+}
 
 
 
